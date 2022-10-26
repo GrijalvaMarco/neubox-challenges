@@ -5,7 +5,7 @@ def start():
     filePath = raw_input("Please enter full path of the file: ")
     outputFileName = raw_input("Please enter the name of the output file: ")
 
-    with open('input2.txt') as f:
+    with open(filePath) as f:
         for line in f:
             indexLine += 1
             values = line.split(' ')
