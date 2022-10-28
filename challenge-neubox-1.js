@@ -1,12 +1,14 @@
 const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
+const readLineHelper = require('./readlineHelper')
 
-async function readFile() {
-    const path_file = 'input.txt'
+async function start() {
+    const filePath = await readLineHelper.getFilePath('Please enter the file path')
+    const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
     try {
         const rl = readline.createInterface({
-            input: fs.createReadStream(path_file),
+            input: fs.createReadStream(filePath),
             crlfDelay: Infinity
         });
 
@@ -22,12 +24,12 @@ async function readFile() {
 
         //Create a output file
         console.log(dataValues)
-        createFile(dataValues)
+        createFile(outputFileName,dataValues)
 
         const used = process.memoryUsage().heapUsed / 1024 / 1024;
         console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
     } catch (err) {
-        console.error(err);
+        console.error("FILE ERROR",err);
     }
 };
 
@@ -40,17 +42,17 @@ function validateRules(index, line, previousValues) {
             const lineValues = line.split(' ')
             const spacesLength = lineValues.length - 1
             if (spacesLength !== 2) {
-                throw new Error('Format first line not allowed. Please verify M1, M2 y N text line')
+                throw new Error('Format first line not allowed. Please verify Instructions and Message Line of the file')
             }
-            let m1 = parseInt(lineValues[0])
-            let m2 = parseInt(lineValues[1])
-            let n = parseInt(lineValues[2])
+            let instruction1Length = parseInt(lineValues[0])
+            let instruction2Length = parseInt(lineValues[1])
+            let messageLength = parseInt(lineValues[2])
 
             //Validate numbers
-            if (m1 < 2 || m1 > 50 || m2 < 2 || m2 > 50) {
-                throw new Error('M1 or M2 values are not permitted')
+            if (instruction1Length < 2 || instruction1Length > 50 || instruction2Length < 2 || instruction2Length > 50) {
+                throw new Error('Instriction1 or Instruction2 values are not permitted')
             }
-            if (n < 3 || n > 5000) {
+            if (messageLength < 3 || messageLength > 5000) {
                 throw new Error('N values are not permitted')
             }
             console.log("Line1..........OK")
@@ -149,12 +151,12 @@ function cleanMessage(str) {
     return result
 }
 
-function createFile(dataValues) {
+function createFile(outputFileName,dataValues) {
     const message = dataValues.message
     let checkFirstI = message.includes(dataValues.firstIntruction);
     let checkSecondI = message.includes(dataValues.secondInstruction);
     var fs = require('fs');
-    var stream = fs.createWriteStream("output.txt");
+    var stream = fs.createWriteStream(`${outputFileName}.txt`);
     stream.once('open', function (fd) {
         stream.write(checkFirstI ? 'SI\n' : 'NO\n');
         stream.write(checkSecondI ? 'SI' : 'NO');
@@ -163,4 +165,4 @@ function createFile(dataValues) {
 }
 
 //Start program: node challenge-neubox-1.js
-readFile()
+start()

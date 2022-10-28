@@ -1,19 +1,20 @@
 const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
+const readLineHelper = require('./readlineHelper')
 
 async function start() {
-    const path_file = 'input2.txt'
+    const filePath = await readLineHelper.getFilePath('Please enter the file path')
+    const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
     try {
         const rl = readline.createInterface({
-            input: fs.createReadStream(path_file),
+            input: fs.createReadStream(filePath),
             crlfDelay: Infinity
         });
 
         let indexLine = 0
         let scorePlayer1 = []
         let scorePlayer2 = []
-        let rounds = 0
 
         rl.on('line', (line) => {
             indexLine++
@@ -23,7 +24,7 @@ async function start() {
             if (indexLine != 1) {
                 scorePlayer1.push(values[0])
                 scorePlayer2.push(values[1])
-            }
+            }            
         });
 
         await events.once(rl, 'close');
@@ -32,10 +33,10 @@ async function start() {
         console.log(results)
 
         let winner = getWinner(results)
-        console.log(winner)
+        console.log("WINNER!",winner)
 
         //Create a output file
-        createFile(winner)
+        createFile(outputFileName,winner)
 
     } catch (err) {
         console.error(err);
@@ -44,16 +45,16 @@ async function start() {
 
 function buildResults(scorePlayer1, scorePlayer2) {
     let results = []
+    let difference = 0
+    let scoreP1 = 0
+    let scoreP2 = 0
+
     for (let index = 0; index < scorePlayer1.length; index++) {
-        const scoreP1 = parseInt(scorePlayer1[index]);
-        const scoreP2 = parseInt(scorePlayer2[index]);
+        scoreP1 = scoreP1 + parseInt(scorePlayer1[index]);
+        scoreP2 = scoreP2 + parseInt(scorePlayer2[index]);
         let winner = 0
-        let difference = 0
-        // console.log(scoreP1+"-"+scoreP2)
         if (scoreP1 > scoreP2) {
             winner = 1
-            console.log(scoreP1)
-            console.log(scoreP2)
             difference = scoreP1 - scoreP2
         }
         if (scoreP2 > scoreP1) {
@@ -68,19 +69,32 @@ function buildResults(scorePlayer1, scorePlayer2) {
 }
 
 function validateLine(values, indexLine) {
+    let scorePlayer1 = values[0]
+    let scorePlayer2 = values[1]
     //Validate first line game rounds
     if (indexLine == 1) {
         rounds = values[0]
+        extraValue = values[1]
+        if (!isNumeric(rounds)) {
+            throw new Error('Rounds value must be a number')
+        }
         if (rounds <= 0 || rounds > 10000) {
             throw new Error('Game Rounds must be between 1 and 10000')
+        }
+        if(extraValue != undefined){
+            throw new Error('File incorrect format')
         }
         return
     }
 
-    //Validate All Lines
+    if(indexLine > 10000){
+        throw new Error('Game Rounds must be between 1 and 10000')
+    }
+
+    //Validate round line
     let spacesLength = values.length - 1
 
-    if (!isNumeric(values[0]) || !isNumeric(values[1])) {
+    if (!isNumeric(scorePlayer1) || !isNumeric(scorePlayer2)) {
         throw new Error('Values must be a number')
     }
 
@@ -99,15 +113,18 @@ function getWinner(arr) {
         if (max == null || parseInt(arr[i]['difference']) > parseInt(max['difference']))
             max = arr[i];
     }
+    if(max.winner == 0){
+        throw new Error('Draw is not allowed')
+    }
     return max;
 }
 
-function createFile(jsonObj) {
+function createFile(outputFileName,jsonObj) {
     const winner = jsonObj.winner
     const difference = jsonObj.difference.toString()
 
     var fs = require('fs');
-    var stream = fs.createWriteStream("output2.txt");
+    var stream = fs.createWriteStream(`${outputFileName}.txt`);
     stream.once('open', function (fd) {
         stream.write(`${winner} ${difference}`);
         stream.end();
