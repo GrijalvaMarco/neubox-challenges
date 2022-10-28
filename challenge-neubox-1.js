@@ -1,11 +1,11 @@
 const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
-const readLineHelper = require('./readlineHelper')
 
-async function start() {
-    const filePath = await readLineHelper.getFilePath('Please enter the file path')
-    const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
+async function start(filePath) {
+    console.log("FILE",filePath)
+    // const filePath = await readLineHelper.getFilePath('Please enter the file path')
+    // const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
     try {
         const rl = readline.createInterface({
             input: fs.createReadStream(filePath),
@@ -22,9 +22,14 @@ async function start() {
 
         await events.once(rl, 'close');
 
+        //Last validation: if message contains multiple instructions return false
+        if(!validateInstructions(dataValues)){
+            throw new Error("Error file Line 4: 2 Instructions in message was found.")
+        }
+
         //Create a output file
         console.log(dataValues)
-        createFile(outputFileName,dataValues)
+        createFile("out.txt",dataValues)
 
         const used = process.memoryUsage().heapUsed / 1024 / 1024;
         console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
@@ -151,6 +156,17 @@ function cleanMessage(str) {
     return result
 }
 
+function validateInstructions(dataValues){
+    const message = dataValues.message
+    let checkFirstI = message.includes(dataValues.firstIntruction);
+    let checkSecondI = message.includes(dataValues.secondInstruction);
+    console.log(checkFirstI)
+    if(checkFirstI && checkSecondI){
+        return false
+    }
+    return true
+}
+
 function createFile(outputFileName,dataValues) {
     const message = dataValues.message
     let checkFirstI = message.includes(dataValues.firstIntruction);
@@ -165,4 +181,6 @@ function createFile(outputFileName,dataValues) {
 }
 
 //Start program: node challenge-neubox-1.js
-start()
+module.exports = {
+    start
+}
