@@ -25,11 +25,11 @@ neubox-challenges is easiest to use when installed with [npm][npm], :
 node challenge-neubox-1.js inputPathFile.txt outputFilename.txt
 ```
 
-Then you can load the module into your code with a `require` call:
-
 ```sh
 node challenge-neubox2.js inputPathFile.txt outputFilename.txt
 ```
+
+Then you can run the alternative challenge solve with python:
 
 ```sh
 python3 challenge2.py inputPathFile.txt outputFilename.txt
