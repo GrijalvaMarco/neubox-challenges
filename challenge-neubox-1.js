@@ -2,10 +2,14 @@ const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
 
-async function start(filePath) {
-    console.log("FILE",filePath)
-    // const filePath = await readLineHelper.getFilePath('Please enter the file path')
-    // const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
+async function start() {
+    const args = process.argv;
+    
+   if(args.length < 4){
+    throw new Error('Parameters like args not found. Please send input file path and output filename')
+   }
+   const filePath = args[2] 
+   const outputFileName = args[3] 
     try {
         const rl = readline.createInterface({
             input: fs.createReadStream(filePath),
@@ -29,7 +33,7 @@ async function start(filePath) {
 
         //Create a output file
         console.log(dataValues)
-        createFile("out.txt",dataValues)
+        createFile(outputFileName,dataValues)
 
         const used = process.memoryUsage().heapUsed / 1024 / 1024;
         console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
@@ -181,6 +185,7 @@ function createFile(outputFileName,dataValues) {
 }
 
 //Start program: node challenge-neubox-1.js
-module.exports = {
-    start
-}
+start()
+// module.exports = {
+//     start
+// }
