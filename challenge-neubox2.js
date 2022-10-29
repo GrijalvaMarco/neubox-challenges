@@ -1,7 +1,6 @@
 const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
-const readLineHelper = require('./readlineHelper')
 
 async function start() {
     const args = process.argv;
@@ -25,16 +24,14 @@ async function start() {
 
         rl.on('line', (line) => {
             indexLine++
+            var values = line.split(' ')
             if(indexLine == 1){
                 rounds = validateFirstLine(line)
             }else{
                 validateLine(line, indexLine, rounds)
-            }
-
-            if (indexLine != 1) {
-                scorePlayer1.push(line[0])
-                scorePlayer2.push(line[1])
-            }            
+                scorePlayer1.push(values[0])
+                scorePlayer2.push(values[1])
+            }          
         });
        
         await events.once(rl, 'close');
@@ -89,8 +86,6 @@ function buildResults(scorePlayer1, scorePlayer2) {
 
 function validateFirstLine(values){
     console.log("ValidateLine1",values)
-    //Validate first line game rounds
-
     let valueLen = values.length
    
     if (valueLen != 1) {
