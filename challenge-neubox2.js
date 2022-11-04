@@ -1,11 +1,16 @@
 const fs = require('fs');
 const events = require('events');
 const readline = require('readline');
-const readLineHelper = require('./readlineHelper')
 
 async function start() {
-    const filePath = await readLineHelper.getFilePath('Please enter the file path')
-    const outputFileName = await readLineHelper.getFilePath('Please enter the name of the output file')
+    const args = process.argv;
+    
+    if(args.length < 4){
+     throw new Error('Parameters like args not found. Please send input file path and output filename')
+    }
+    const filePath = args[2] 
+    const outputFileName = args[3] 
+
     try {
         const rl = readline.createInterface({
             input: fs.createReadStream(filePath),
@@ -13,21 +18,32 @@ async function start() {
         });
 
         let indexLine = 0
+        let rounds = 0
         let scorePlayer1 = []
         let scorePlayer2 = []
 
         rl.on('line', (line) => {
             indexLine++
             var values = line.split(' ')
-            validateLine(values, indexLine)
-
-            if (indexLine != 1) {
+            if(indexLine == 1){
+                rounds = validateFirstLine(line)
+            }else{
+                validateLine(line, indexLine, rounds)
                 scorePlayer1.push(values[0])
                 scorePlayer2.push(values[1])
-            }            
+            }          
         });
-
+       
         await events.once(rl, 'close');
+
+        if (indexLine == 0) {
+            throw new Error('Error: Nothing to read')
+        }
+
+        //Validate if total rounds are exactly as first line specified
+        if(rounds != indexLine-1){
+            throw new Error('Round specified at begin not match with total rounds.')
+        }
 
         let results = buildResults(scorePlayer1, scorePlayer2)
         console.log(results)
@@ -68,38 +84,47 @@ function buildResults(scorePlayer1, scorePlayer2) {
     return results
 }
 
-function validateLine(values, indexLine) {
-    let scorePlayer1 = values[0]
-    let scorePlayer2 = values[1]
-    //Validate first line game rounds
-    if (indexLine == 1) {
-        rounds = values[0]
-        extraValue = values[1]
-        if (!isNumeric(rounds)) {
-            throw new Error('Rounds value must be a number')
-        }
-        if (rounds <= 0 || rounds > 10000) {
-            throw new Error('Game Rounds must be between 1 and 10000')
-        }
-        if(extraValue != undefined){
-            throw new Error('File incorrect format')
-        }
-        return
+function validateFirstLine(values){
+    console.log("ValidateLine1",values)
+    let valueLen = values.length
+   
+    if (valueLen != 1) {
+        throw new Error('Error: Check format of document Line1')
     }
 
-    if(indexLine > 10000){
+    let rounds = values[0]
+    if (!isNumeric(rounds)) {
+        throw new Error('Rounds value must be a number')
+    }
+    if (rounds <= 0 || rounds > 10000) {
         throw new Error('Game Rounds must be between 1 and 10000')
     }
+ 
+    return rounds
 
-    //Validate round line
-    let spacesLength = values.length - 1
+}
 
+function validateLine(line, indexLine, totalRounds) {
+    console.log("ValidateLine"+indexLine)
+    let values = line.split(' ')
+    const spacesLength = values.length - 1
+
+    if (spacesLength != 1) {
+        throw new Error(`Error: Check format of document Line: ${indexLine}`)
+    }
+
+    let scorePlayer1 = values[0]
+    let scorePlayer2 = values[1]
     if (!isNumeric(scorePlayer1) || !isNumeric(scorePlayer2)) {
         throw new Error('Values must be a number')
     }
 
-    if (spacesLength !== 1) {
-        throw new Error(`Error: Check format of document Line: ${indexLine}`)
+    if(indexLine-1 > totalRounds){
+        throw new Error('Round specified at begin not match with total rounds.')
+    }
+
+    if(indexLine > 10001){
+        throw new Error('Game Rounds must be between 1 and 10000')
     }
 }
 
